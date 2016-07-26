@@ -8,6 +8,7 @@
         android:id="@+id/iv_app_manager_icon"
         android:layout_width="60dp"
         android:layout_height="60dp"
+        android:layout_margin="5dp"
         android:contentDescription="@string/hello"
         android:scaleType="fitXY"
         android:src="@drawable/ic_launcher" />

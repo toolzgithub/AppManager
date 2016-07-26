@@ -29,11 +29,12 @@ public class AppInfoProvider {
 		// 获取所有安装的包信息
 		List<PackageInfo> installedPackages = pm.getInstalledPackages(0);
 		for (PackageInfo packageInfo : installedPackages) {
+			String packageName = packageInfo.packageName;// 包名
 			// 获取应用信息 ApplicationInfo对应的 manifest里的application节点
 			ApplicationInfo applicationInfo = packageInfo.applicationInfo;
 			String appName = applicationInfo.loadLabel(pm).toString();// 获取应用名称
 			Drawable icon = applicationInfo.loadIcon(pm);// 获取应用图标
-			AppInfo info = new AppInfo(appName, icon);
+			AppInfo info = new AppInfo(appName, icon,packageName);
 			infos.add(info);
 		}
 		return infos;

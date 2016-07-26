@@ -11,11 +11,13 @@ import android.graphics.drawable.Drawable;
 public class AppInfo {
 	private Drawable icon;
 	private String appName;
+	private String packageName;
 
-	public AppInfo(String appName, Drawable icon) {
+	public AppInfo(String appName, Drawable icon, String packageName) {
 		super();
 		this.appName = appName;
 		this.icon = icon;
+		this.packageName = packageName;
 	}
 
 	public Drawable getIcon() {
@@ -32,6 +34,14 @@ public class AppInfo {
 
 	public void setAppName(String appName) {
 		this.appName = appName;
+	}
+
+	public String getPackageName() {
+		return packageName;
+	}
+
+	public void setPackageName(String packageName) {
+		this.packageName = packageName;
 	}
 
 }
