@@ -23,7 +23,7 @@ import net.sunniwell.appmanager.R.layout;
  * @时间 2016年7月25号 09:40
  */
 public class MainActivity extends Activity {
-
+ 
 	private ListView mLvMain;// 应用程序列表
 	private List<String> test = new ArrayList<>();// 测试数据
 	private AppManagerAdapter mAppManagerAdapter;

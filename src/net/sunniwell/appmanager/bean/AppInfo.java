@@ -6,11 +6,17 @@ import android.graphics.drawable.Drawable;
  * 应用程序类，包括了程序相关属性
  * 
  * @author 郑鹏超
- * @时间 2016年7月25号 
+ * @时间 2016年7月25号
  */
 public class AppInfo {
 	private Drawable icon;
 	private String appName;
+
+	public AppInfo(String appName, Drawable icon) {
+		super();
+		this.appName = appName;
+		this.icon = icon;
+	}
 
 	public Drawable getIcon() {
 		return icon;
