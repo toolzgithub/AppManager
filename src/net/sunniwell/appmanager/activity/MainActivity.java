@@ -6,9 +6,12 @@ import java.util.List;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.AlertDialog.Builder;
+import android.content.BroadcastReceiver;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.DialogInterface.OnClickListener;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.net.Uri;
 import android.os.Bundle;
 import android.view.View;
@@ -35,6 +38,7 @@ public class MainActivity extends Activity {
 	/* private List<String> test = new ArrayList<>();// 测试数据 */
 	private List<AppInfo> mAppInfos = new ArrayList<>();// 应用信息对象
 	private AppManagerAdapter mAppManagerAdapter;
+	private AppReceiver mAppReceiver;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -43,6 +47,14 @@ public class MainActivity extends Activity {
 		initView();
 		initData();
 		click();
+		registerBroadcastReceiver();
+	}
+
+	@Override
+	protected void onDestroy() {
+		super.onDestroy();
+		// 解除注册卸载的广播接收者
+		unregisterReceiver(mAppReceiver);
 	}
 
 	/**
@@ -81,6 +93,90 @@ public class MainActivity extends Activity {
 	 */
 	private void click() {
 		mLvMain.setOnItemLongClickListener(new LvMainItemLongListener());
+	}
+
+	/**
+	 * 功能：注册一个广播接收者
+	 * 
+	 * @author 郑鹏超
+	 * @时间 2016年7月26日
+	 */
+	private void registerBroadcastReceiver() {
+		mAppReceiver = new AppReceiver();
+		// 注册一个app卸载的广播接收者
+		IntentFilter filter = new IntentFilter();
+		filter.addAction(Intent.ACTION_PACKAGE_ADDED);
+		filter.addAction(Intent.ACTION_PACKAGE_REMOVED);
+		filter.addDataScheme("package");// 必须添加
+		registerReceiver(mAppReceiver, filter);
+	}
+
+	/**
+	 * 功能：卸载窗口
+	 * 
+	 * @author 郑鹏超
+	 * @时间 2016年7月26日
+	 */
+	private void showUninstallDialog(final AppInfo appInfo) {
+		AlertDialog.Builder builder = new Builder(MainActivity.this);
+		builder.setMessage("你是否要卸载“" + appInfo.getAppName() + "”?");
+		builder.setTitle("卸载");
+		builder.setIcon(android.R.drawable.ic_menu_delete);
+		builder.setPositiveButton("是", new OnClickListener() {
+			@Override
+			public void onClick(DialogInterface dialog, int which) {
+				showUninstallVerifyDialog(appInfo);
+				dialog.dismiss();
+			}
+		});
+		builder.setNegativeButton("否", new OnClickListener() {
+			@Override
+			public void onClick(DialogInterface dialog, int which) {
+				dialog.dismiss();
+			}
+		});
+		builder.create().show();
+	}
+
+	/**
+	 * 功能：卸载确认窗口，完成卸载功能
+	 * 
+	 * @author 郑鹏超
+	 * @param appInfo
+	 * @时间 2016年7月26日
+	 */
+	private void showUninstallVerifyDialog(final AppInfo appInfo) {
+		AlertDialog.Builder builder = new Builder(MainActivity.this);
+		builder.setMessage("请确认卸载！");
+		builder.setTitle("请确认");
+		builder.setIcon(android.R.drawable.ic_menu_info_details);
+		builder.setPositiveButton("确认", new OnClickListener() {
+			@Override
+			public void onClick(DialogInterface dialog, int which) {
+				uninstall(appInfo.getPackageName());
+			}
+		});
+		builder.setNegativeButton("取消", new OnClickListener() {
+			@Override
+			public void onClick(DialogInterface dialog, int which) {
+				dialog.dismiss();
+			}
+		});
+		builder.create().show();
+	}
+
+	/**
+	 * 功能：卸载APP
+	 * 
+	 * @author 郑鹏超
+	 * @时间 2016年7月26日
+	 */
+	private void uninstall(String packageName) {
+		Intent intent = new Intent();
+		intent.setAction("android.intent.action.DELETE");
+		intent.addCategory("android.intent.category.DEFAULT");
+		intent.setData(Uri.parse("package:" + packageName));
+		startActivity(intent);
 	}
 
 	/**
@@ -165,70 +261,24 @@ public class MainActivity extends Activity {
 	}
 
 	/**
-	 * 功能：卸载窗口
+	 * 功能：用来接收应用卸载与安装的广播
 	 * 
 	 * @author 郑鹏超
-	 * @时间 2016年7月26日
 	 */
-	private void showUninstallDialog(final AppInfo appInfo) {
-		AlertDialog.Builder builder = new Builder(MainActivity.this);
-		builder.setMessage("你是否要卸载“" + appInfo.getAppName() + "”?");
-		builder.setTitle("卸载");
-		builder.setIcon(android.R.drawable.ic_menu_delete);
-		builder.setPositiveButton("是", new OnClickListener() {
-			@Override
-			public void onClick(DialogInterface dialog, int which) {
-				showUninstallVerifyDialog(appInfo);
-				dialog.dismiss();
-			}
-		});
-		builder.setNegativeButton("否", new OnClickListener() {
-			@Override
-			public void onClick(DialogInterface dialog, int which) {
-				dialog.dismiss();
-			}
-		});
-		builder.create().show();
-	}
+	public class AppReceiver extends BroadcastReceiver {
 
-	/**
-	 * 功能：卸载确认窗口，完成卸载功能
-	 * 
-	 * @author 郑鹏超
-	 * @param appInfo
-	 * @时间 2016年7月26日
-	 */
-	private void showUninstallVerifyDialog(final AppInfo appInfo) {
-		AlertDialog.Builder builder = new Builder(MainActivity.this);
-		builder.setMessage("请确认卸载！");
-		builder.setTitle("请确认");
-		builder.setIcon(android.R.drawable.ic_menu_info_details);
-		builder.setPositiveButton("确认", new OnClickListener() {
-			@Override
-			public void onClick(DialogInterface dialog, int which) {
-				uninstall(appInfo.getPackageName());
+		@Override
+		public void onReceive(Context context, Intent intent) {
+			// 接收安装广播
+			if (intent.getAction().equals("android.intent.action.PACKAGE_ADDED")) {
+				String packageName = intent.getDataString();
+				System.out.println("安装了:" + packageName + "包名的程序");
 			}
-		});
-		builder.setNegativeButton("取消", new OnClickListener() {
-			@Override
-			public void onClick(DialogInterface dialog, int which) {
-				dialog.dismiss();
+			// 接收卸载广播
+			if (intent.getAction().equals("android.intent.action.PACKAGE_REMOVED")) {
+				String packageName = intent.getDataString();
+				System.out.println("卸载了:" + packageName + "包名的程序");
 			}
-		});
-		builder.create().show();
-	}
-
-	/**
-	 * 功能：卸载APP
-	 * 
-	 * @author 郑鹏超
-	 * @时间 2016年7月26日
-	 */
-	private void uninstall(String packageName) {
-		Intent intent = new Intent();
-		intent.setAction("android.intent.action.DELETE");
-		intent.addCategory("android.intent.category.DEFAULT");
-		intent.setData(Uri.parse("package:" + packageName));
-		startActivity(intent);
+		}
 	}
 }
