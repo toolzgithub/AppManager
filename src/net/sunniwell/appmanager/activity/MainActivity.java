@@ -295,8 +295,10 @@ public class MainActivity extends Activity {
 		public void onReceive(Context context, Intent intent) {
 			// 接收安装广播
 			if (TextUtils.equals(intent.getAction(), "android.intent.action.PACKAGE_ADDED")) {
-				String packageName = intent.getDataString();
-				System.out.println("安装了:" + packageName + "包名的程序");
+				/*
+				 * String packageName = intent.getDataString();
+				 * System.out.println("安装了:" + packageName + "包名的程序");
+				 */
 				mAppInfos.clear();
 				mAppInfos.addAll(AppInfoProvider.getAppInfo(context));
 				mAppManagerAdapter.notifyDataSetChanged();// 刷新界面
@@ -304,7 +306,7 @@ public class MainActivity extends Activity {
 			// 接收卸载广播
 			if (TextUtils.equals(intent.getAction(), "android.intent.action.PACKAGE_REMOVED")) {
 				String packageName = intent.getDataString();
-				System.out.println("卸载了:" + packageName + "包名的程序");
+				/*System.out.println("卸载了:" + packageName + "包名的程序");*/
 				packageName = packageName.replace("package:", "");// 去掉字符串中的package:
 				ListIterator<AppInfo> listIterator = mAppInfos.listIterator();
 				while (listIterator.hasNext()) {
