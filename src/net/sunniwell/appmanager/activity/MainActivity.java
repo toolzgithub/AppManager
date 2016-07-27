@@ -2,6 +2,7 @@ package net.sunniwell.appmanager.activity;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.ListIterator;
 
 import android.app.Activity;
 import android.app.AlertDialog;
@@ -14,14 +15,17 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.net.Uri;
 import android.os.Bundle;
+import android.text.TextUtils;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
+import android.widget.AdapterView.OnItemClickListener;
 import android.widget.AdapterView.OnItemLongClickListener;
 import android.widget.BaseAdapter;
 import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
+import android.widget.Toast;
 import net.sunniwell.appmanager.R;
 import net.sunniwell.appmanager.bean.AppInfo;
 import net.sunniwell.appmanager.engine.AppInfoProvider;
@@ -93,6 +97,7 @@ public class MainActivity extends Activity {
 	 */
 	private void click() {
 		mLvMain.setOnItemLongClickListener(new LvMainItemLongListener());
+		mLvMain.setOnItemClickListener(new LvMainItemListener());
 	}
 
 	/**
@@ -245,7 +250,7 @@ public class MainActivity extends Activity {
 	}
 
 	/**
-	 * 功能：LvMain的但条目长按监听
+	 * 功能：LvMain的单条目长按监听
 	 * 
 	 * @author 郑鹏超
 	 */
@@ -261,23 +266,54 @@ public class MainActivity extends Activity {
 	}
 
 	/**
+	 * 功能：LvMain的单条目点击监听
+	 * 
+	 * @author 郑鹏超
+	 */
+	private class LvMainItemListener implements OnItemClickListener {
+
+		@Override
+		public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+			AppInfo appInfo = (AppInfo) parent.getItemAtPosition(position);
+			try {
+				Intent intent = MainActivity.this.getPackageManager().getLaunchIntentForPackage(appInfo.getPackageName());
+				startActivity(intent);
+			} catch (Exception e) {
+				Toast.makeText(getApplicationContext(), "无法打开", Toast.LENGTH_SHORT).show();
+			}
+		}
+	}
+
+	/**
 	 * 功能：用来接收应用卸载与安装的广播
 	 * 
 	 * @author 郑鹏超
 	 */
-	public class AppReceiver extends BroadcastReceiver {
+	private class AppReceiver extends BroadcastReceiver {
 
 		@Override
 		public void onReceive(Context context, Intent intent) {
 			// 接收安装广播
-			if (intent.getAction().equals("android.intent.action.PACKAGE_ADDED")) {
+			if (TextUtils.equals(intent.getAction(), "android.intent.action.PACKAGE_ADDED")) {
 				String packageName = intent.getDataString();
 				System.out.println("安装了:" + packageName + "包名的程序");
+				mAppInfos.clear();
+				mAppInfos.addAll(AppInfoProvider.getAppInfo(context));
+				mAppManagerAdapter.notifyDataSetChanged();// 刷新界面
 			}
 			// 接收卸载广播
-			if (intent.getAction().equals("android.intent.action.PACKAGE_REMOVED")) {
+			if (TextUtils.equals(intent.getAction(), "android.intent.action.PACKAGE_REMOVED")) {
 				String packageName = intent.getDataString();
 				System.out.println("卸载了:" + packageName + "包名的程序");
+				packageName = packageName.replace("package:", "");// 去掉字符串中的package:
+				ListIterator<AppInfo> listIterator = mAppInfos.listIterator();
+				while (listIterator.hasNext()) {
+					AppInfo info = listIterator.next();
+					if (TextUtils.equals(packageName, info.getPackageName())) {
+						listIterator.remove();
+					}
+				}
+				mAppManagerAdapter.notifyDataSetChanged();// 刷新界面
 			}
 		}
 	}
