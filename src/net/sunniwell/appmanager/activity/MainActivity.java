@@ -276,6 +276,7 @@ public class MainActivity extends Activity {
 		public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
 			AppInfo appInfo = (AppInfo) parent.getItemAtPosition(position);
 			try {
+				// 获取点击程序的程序入口的Intent
 				Intent intent = MainActivity.this.getPackageManager().getLaunchIntentForPackage(appInfo.getPackageName());
 				startActivity(intent);
 			} catch (Exception e) {
@@ -306,7 +307,7 @@ public class MainActivity extends Activity {
 			// 接收卸载广播
 			if (TextUtils.equals(intent.getAction(), "android.intent.action.PACKAGE_REMOVED")) {
 				String packageName = intent.getDataString();
-				/*System.out.println("卸载了:" + packageName + "包名的程序");*/
+				/* System.out.println("卸载了:" + packageName + "包名的程序"); */
 				packageName = packageName.replace("package:", "");// 去掉字符串中的package:
 				ListIterator<AppInfo> listIterator = mAppInfos.listIterator();
 				while (listIterator.hasNext()) {
