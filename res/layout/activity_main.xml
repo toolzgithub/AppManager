@@ -3,6 +3,42 @@
     android:layout_height="fill_parent"
     android:orientation="vertical" >
 
+    <RadioGroup
+        android:id="@+id/rg_sorted"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal" >
+
+        <RadioButton
+            android:id="@+id/rb_user"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:background="@drawable/bg_selector"
+            android:button="@null"
+            android:checked="true"
+            android:gravity="center"
+            android:text="@string/user_app"
+            android:textSize="21sp" />
+
+        <RadioButton
+            android:id="@+id/rb_sys"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:background="@drawable/bg_selector"
+            android:button="@null"
+            android:gravity="center"
+            android:text="@string/sys_app"
+            android:textSize="21sp" />
+    </RadioGroup>
+
+    <FrameLayout
+        android:id="@+id/fl_content"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content" >
+    </FrameLayout>
+
     <ListView
         android:id="@+id/lv_main"
         android:layout_width="match_parent"

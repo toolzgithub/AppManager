@@ -24,6 +24,8 @@ import android.widget.AdapterView.OnItemLongClickListener;
 import android.widget.BaseAdapter;
 import android.widget.ImageView;
 import android.widget.ListView;
+import android.widget.RadioGroup;
+import android.widget.RadioGroup.OnCheckedChangeListener;
 import android.widget.TextView;
 import android.widget.Toast;
 import net.sunniwell.appmanager.R;
@@ -34,23 +36,26 @@ import net.sunniwell.appmanager.engine.AppInfoProvider;
  * 软件管理器的主类，负责加载应用列表，卸载应用功能
  * 
  * @author 郑鹏超
- * @时间 2016年7月25号 09:40
  */
 public class MainActivity extends Activity {
 
 	private ListView mLvMain;// 应用程序列表
 	/* private List<String> test = new ArrayList<>();// 测试数据 */
 	private List<AppInfo> mAppInfos = new ArrayList<>();// 应用信息对象
+	private List<AppInfo> mUserAppInfos = new ArrayList<>();// 用户应用信息对象
+	private List<AppInfo> mSysAppInfos = new ArrayList<>();// 系统应用信息对象
 	private AppManagerAdapter mAppManagerAdapter;
 	private AppReceiver mAppReceiver;
+	private RadioGroup mRgSorted;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_main);
 		initView();
+		setSortedListener();
 		initData();
-		click();
+		setLvMainListener();
 		registerBroadcastReceiver();
 	}
 
@@ -69,7 +74,7 @@ public class MainActivity extends Activity {
 	 */
 	private void initView() {
 		mLvMain = (ListView) findViewById(R.id.lv_main);
-
+		mRgSorted = (RadioGroup) findViewById(R.id.rg_sorted);
 	}
 
 	/**
@@ -85,19 +90,38 @@ public class MainActivity extends Activity {
 		 * mAppManagerAdapter = new AppManagerAdapter(test);
 		 */
 		mAppInfos = AppInfoProvider.getAppInfo(getApplicationContext());
+		for (AppInfo appInfo : mAppInfos) {
+			if (appInfo.isSys()) {// 是系统应用
+				mSysAppInfos.add(appInfo);
+			} else {
+				mUserAppInfos.add(appInfo);
+			}
+		}
+		mAppInfos.clear();
+		mAppInfos.addAll(mUserAppInfos);
 		mAppManagerAdapter = new AppManagerAdapter(mAppInfos);
 		mLvMain.setAdapter(mAppManagerAdapter);
 	}
 
 	/**
-	 * 功能：监听事件
+	 * 功能：ListView监听事件
 	 * 
 	 * @author 郑鹏超
 	 * @时间 2016年7月26日
 	 */
-	private void click() {
-		mLvMain.setOnItemLongClickListener(new LvMainItemLongListener());
-		mLvMain.setOnItemClickListener(new LvMainItemListener());
+	private void setLvMainListener() {
+		mLvMain.setOnItemLongClickListener(new LvMainItemLongListener());// 卸载
+		mLvMain.setOnItemClickListener(new LvMainItemListener());// 跳转
+	}
+
+	/**
+	 * 功能：用户应用，系统应用切换监听
+	 * 
+	 * @author 郑鹏超
+	 * @时间 2016年8月12日
+	 */
+	private void setSortedListener() {
+		mRgSorted.setOnCheckedChangeListener(new SortedClickListener());
 	}
 
 	/**
@@ -140,6 +164,20 @@ public class MainActivity extends Activity {
 				dialog.dismiss();
 			}
 		});
+		builder.create().show();
+	}
+
+	/**
+	 * 功能：系统应用不能卸载窗口
+	 * 
+	 * @author 郑鹏超
+	 * @时间 2016年8月12日
+	 */
+	public void showNoUninstallDialog(AppInfo appInfo) {
+		AlertDialog.Builder builder = new Builder(MainActivity.this);
+		builder.setMessage("“" + appInfo.getAppName() + "”不能卸载！");
+		builder.setTitle("警告");
+		builder.setIcon(android.R.drawable.ic_menu_close_clear_cancel);
 		builder.create().show();
 	}
 
@@ -250,7 +288,7 @@ public class MainActivity extends Activity {
 	}
 
 	/**
-	 * 功能：LvMain的单条目长按监听
+	 * 功能：LvMain的单条目长按监听，用于卸载
 	 * 
 	 * @author 郑鹏超
 	 */
@@ -259,14 +297,18 @@ public class MainActivity extends Activity {
 		@Override
 		public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
 			AppInfo appInfo = (AppInfo) parent.getItemAtPosition(position);
-			showUninstallDialog(appInfo);
+			if (appInfo.isSys() || appInfo.getPackageName().equals(getApplicationInfo().packageName)) {
+				showNoUninstallDialog(appInfo);
+			} else {
+				showUninstallDialog(appInfo);
+			}
 			return true;
 		}
 
 	}
 
 	/**
-	 * 功能：LvMain的单条目点击监听
+	 * 功能：LvMain的单条目点击监听，用于跳转
 	 * 
 	 * @author 郑鹏超
 	 */
@@ -286,6 +328,34 @@ public class MainActivity extends Activity {
 	}
 
 	/**
+	 * 功能：用于切换用户应用和系统应用
+	 * 
+	 * @author 郑鹏超
+	 * @时间 2016年8月12日
+	 */
+	private class SortedClickListener implements OnCheckedChangeListener {
+
+		@Override
+		public void onCheckedChanged(RadioGroup group, int checkedId) {
+
+			switch (checkedId) {
+			case R.id.rb_user:// 点击用户应用时，加载用户应用信息集合
+				mAppInfos.clear();
+				mAppInfos.addAll(mUserAppInfos);
+				break;
+			case R.id.rb_sys:// 点击系统应用时，加载系统应用信息集合
+				mAppInfos.clear();
+				mAppInfos.addAll(mSysAppInfos);
+				break;
+
+			default:
+				break;
+			}
+			mAppManagerAdapter.notifyDataSetChanged();
+		}
+	}
+
+	/**
 	 * 功能：用来接收应用卸载与安装的广播
 	 * 
 	 * @author 郑鹏超
@@ -300,23 +370,36 @@ public class MainActivity extends Activity {
 				 * String packageName = intent.getDataString();
 				 * System.out.println("安装了:" + packageName + "包名的程序");
 				 */
-				mAppInfos.clear();
-				mAppInfos.addAll(AppInfoProvider.getAppInfo(context));
-				mAppManagerAdapter.notifyDataSetChanged();// 刷新界面
+				AppInfo appInfo = AppInfoProvider.getAppInfo(context, intent.getDataString().replace("package:", ""));
+				mUserAppInfos.add(appInfo);
+				if (mRgSorted.getCheckedRadioButtonId() == R.id.rb_user) {
+					mAppInfos.add(appInfo);
+					mAppManagerAdapter.notifyDataSetChanged();// 刷新界面
+				}
 			}
 			// 接收卸载广播
 			if (TextUtils.equals(intent.getAction(), "android.intent.action.PACKAGE_REMOVED")) {
 				String packageName = intent.getDataString();
 				/* System.out.println("卸载了:" + packageName + "包名的程序"); */
 				packageName = packageName.replace("package:", "");// 去掉字符串中的package:
-				ListIterator<AppInfo> listIterator = mAppInfos.listIterator();
-				while (listIterator.hasNext()) {
-					AppInfo info = listIterator.next();
+				ListIterator<AppInfo> userListIterator = mUserAppInfos.listIterator();
+				while (userListIterator.hasNext()) {
+					AppInfo info = userListIterator.next();
 					if (TextUtils.equals(packageName, info.getPackageName())) {
-						listIterator.remove();
+						userListIterator.remove();
 					}
 				}
-				mAppManagerAdapter.notifyDataSetChanged();// 刷新界面
+				// 如果当前列表是用户应用列表，则刷新界面
+				if (mRgSorted.getCheckedRadioButtonId() == R.id.rb_user) {
+					ListIterator<AppInfo> listIterator = mAppInfos.listIterator();
+					while (listIterator.hasNext()) {
+						AppInfo info = listIterator.next();
+						if (TextUtils.equals(packageName, info.getPackageName())) {
+							listIterator.remove();
+						}
+					}
+					mAppManagerAdapter.notifyDataSetChanged();// 刷新界面
+				}
 			}
 		}
 	}

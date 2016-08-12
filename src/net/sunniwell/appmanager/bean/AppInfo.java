@@ -6,18 +6,19 @@ import android.graphics.drawable.Drawable;
  * 应用程序类，包括了程序相关属性
  * 
  * @author 郑鹏超
- * @时间 2016年7月25号
  */
 public class AppInfo {
 	private Drawable icon;
 	private String appName;
 	private String packageName;
+	private boolean isSys;
 
-	public AppInfo(String appName, Drawable icon, String packageName) {
+	public AppInfo(String appName, Drawable icon, String packageName, boolean isSys) {
 		super();
 		this.appName = appName;
 		this.icon = icon;
 		this.packageName = packageName;
+		this.isSys = isSys;
 	}
 
 	public Drawable getIcon() {
@@ -43,5 +44,9 @@ public class AppInfo {
 	public void setPackageName(String packageName) {
 		this.packageName = packageName;
 	}
-
+	
+	public boolean isSys() {
+		return isSys;
+	}
+	
 }
